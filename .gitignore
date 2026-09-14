@@ -1,0 +1,3 @@
+__pycache__
+bsky_circuit_breaker.egg-info
+circuit_breaker.db

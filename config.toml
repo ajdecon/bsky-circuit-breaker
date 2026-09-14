@@ -1,0 +1,83 @@
+# ==========================================
+# BSKY-CIRCUIT-BREAKER CONFIGURATION
+# ==========================================
+
+[credentials]
+# The Bluesky handle to monitor (can be overridden via --handle CLI flag)
+handle = "your_handle.bsky.social"
+# An App Password generated in Bluesky Settings -> App Passwords (not your main password!)
+# Can be overridden via --app-password CLI flag
+app_password = "xxxx-xxxx-xxxx-xxxx"
+
+[run_settings]
+# Evaluate posts and their interactions up to this many days old
+lookback_days = 60  
+# Local SQLite database path for maintaining state
+db_path = "circuit_breaker.db"
+# If true, completely bypasses the LLM and relies strictly on algorithmic_rules
+disable_llm = true
+
+[action_settings]
+# Should the script restrict replies when a limit is tripped?
+apply_threadgate = true
+# Threadgate rules. Options: "mentionRule", "followingRule", "followerRule", "listRule". 
+# Leave as an empty list [] to completely disable all replies.
+allowed_reply_rules = ["followingRule"]
+
+# Should the script restrict quotes when a limit is tripped?
+apply_postgate = true
+# If true, sets "app.bsky.feed.postgate#disableRule" to prevent any new quote posts
+disable_new_quotes = true
+
+[llm]
+# URL of local Ollama instance (recommended to run in CPU-only mode for background jobs)
+api_base = "http://localhost:11434"
+# The model used for sentiment evaluation
+model_name = "llama3.2:3b-instruct-q4_K_M"
+# Maximum time to wait for the local LLM to respond
+timeout_seconds = 60
+# Max number of LLM evaluations to perform per run to prevent CPU bottlenecking during a dogpile
+max_llm_evaluations_per_run = 100 
+
+[algorithmic_rules]
+# Lock post if total interactions (replies + quotes) exceed this lifetime cap
+max_total_interactions = 100  
+
+# Lock post if interaction velocity exceeds this rate (interactions per rolling 1-hour window)
+max_interactions_per_hour = 25
+
+# Lock post if the ratio of (replies / likes) exceeds this float. (e.g., 2.0 means 2x more replies than likes)
+reply_to_like_ratio_threshold = 2.0
+# Only triggers the ratio check if total replies are at least this number
+minimum_replies_for_ratio = 10
+
+# Lock post if quoted by an actor with more than this many followers
+follower_amplification_threshold = 10000  
+
+[sentiment_rules]
+# Lock post if the cumulative number of LLM-flagged "bad" interactions hits this limit
+max_bad_interactions = 3
+
+  # --- Sentiment Criteria Definitions ---
+  # The LLM will score each enabled criteria from 0.0 to 1.0 based on the definition.
+  
+  [sentiment_rules.criteria.hostile]
+  enabled = true
+  threshold = 0.70
+  definition = "The reply contains direct personal insults, aggressive hostility, mockery, or passive-aggressive attack toward the author."
+
+  [sentiment_rules.criteria.toxic]
+  enabled = true
+  threshold = 0.85
+  definition = "The reply contains extreme abuse, severe harassment, threats, or gratuitous profanity directed in anger."
+
+  [sentiment_rules.criteria.slurs]
+  enabled = true
+  threshold = 0.50
+  definition = "The reply contains explicit hate speech, dehumanizing language, or identity-based slurs."
+
+  [sentiment_rules.criteria.unrelated]
+  enabled = false
+  threshold = 0.90
+  definition = "The reply is completely off-topic spam, a bot response, a crypto scam, or an intentional thread hijack."
+

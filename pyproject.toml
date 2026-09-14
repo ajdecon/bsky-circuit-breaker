@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bsky-circuit-breaker"
+version = "0.1.0"
+description = "A lightweight, periodic moderation script to protect Bluesky users from dogpiling and harassment."
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+dependencies = [
+    "atproto>=0.0.53"
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/bsky-circuit-breaker"
+Issues = "https://github.com/yourusername/bsky-circuit-breaker/issues"
+
+[project.scripts]
+bsky-circuit-breaker = "breaker:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
+# Explicitly tell setuptools to only package breaker.py and ignore test files
+[tool.setuptools]
+py-modules = ["breaker"]
+
